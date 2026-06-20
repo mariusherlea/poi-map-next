@@ -1,64 +1,47 @@
 "use client";
 
-import {
-  APIProvider,
-  Map,
-  AdvancedMarker,
-  useMap,
-} from "@vis.gl/react-google-maps";
-import { useEffect, useState } from "react";
-import { pois, type Poi } from "@/data/pois";
+import { APIProvider, Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { useEffect } from "react";
+import { pois } from "@/data/pois";
 
-function VisibleMarkers() {
+function ClusteredMarkers() {
   const map = useMap();
-  const [visiblePois, setVisiblePois] = useState<Poi[]>([]);
+  const markerLibrary = useMapsLibrary("marker");
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !markerLibrary) return;
 
-    const updateVisiblePois = () => {
-      const bounds = map.getBounds();
-      const zoom = map.getZoom();
+    const markers = pois.map((poi) => {
+      const marker = new markerLibrary.AdvancedMarkerElement({
+        position: { lat: poi.lat, lng: poi.lng },
+        title: poi.title,
+      });
 
-      if (!bounds || !zoom || zoom < 13) {
-        setVisiblePois([]);
-        return;
-      }
+      const markerContent = document.createElement("div");
+      markerContent.className =
+        "rounded-full bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-lg";
+      markerContent.textContent = poi.title;
 
-      const filteredPois = pois.filter((poi) =>
-        bounds.contains({
-          lat: poi.lat,
-          lng: poi.lng,
-        })
-      );
+      marker.content = markerContent;
 
-      setVisiblePois(filteredPois);
-    };
+      return marker;
+    });
 
-    updateVisiblePois();
-
-    const listener = map.addListener("idle", updateVisiblePois);
+    const clusterer = new MarkerClusterer({
+      map,
+      markers,
+    });
 
     return () => {
-      listener.remove();
+      clusterer.clearMarkers();
+      markers.forEach((marker) => {
+        marker.map = null;
+      });
     };
-  }, [map]);
+  }, [map, markerLibrary]);
 
-  return (
-    <>
-      {visiblePois.map((poi) => (
-        <AdvancedMarker
-          key={poi.id}
-          position={{ lat: poi.lat, lng: poi.lng }}
-          title={poi.title}
-        >
-          <div className="rounded-full bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-lg">
-            {poi.title}
-          </div>
-        </AdvancedMarker>
-      ))}
-    </>
-  );
+  return null;
 }
 
 export default function PoiMap() {
@@ -72,7 +55,7 @@ export default function PoiMap() {
         disableDefaultUI={false}
         className="h-[600px] w-full rounded-2xl"
       >
-        <VisibleMarkers />
+        <ClusteredMarkers />
       </Map>
     </APIProvider>
   );

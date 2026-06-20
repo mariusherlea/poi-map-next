@@ -1,7 +1,7 @@
 export type Poi = {
   id: number;
   title: string;
-  category: "restaurant" | "parking" | "hotel" | "service";
+  category: "restaurant" | "parking" | "hotel" | "service" |"supermarket";
   lat: number;
   lng: number;
 };
@@ -27,5 +27,12 @@ export const pois: Poi[] = [
     category: "service",
     lat: 51.8891,
     lng: 5.4352,
+  },
+  {
+    id: 4,
+    title: "Jumbo Lienden",
+    category: "supermarket",
+    lat: 51.9451,
+    lng: 5.5235,
   },
 ];
